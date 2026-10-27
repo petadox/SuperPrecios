@@ -15,7 +15,7 @@ export async function loadCatalog() {
     const lists = await Promise.all(index.chains.map((c) => fetchJson(`${c.id}.json`)))
     products.value = lists.flat().map((p) => ({
       ...p,
-      search: normalize(`${p.name} ${p.subcategory} ${p.category}`),
+      search: normalize([p.name, p.format, p.subcategory, p.category].join(' ')),
     }))
     chains.value = index.chains
     updatedAt.value = index.updatedAt

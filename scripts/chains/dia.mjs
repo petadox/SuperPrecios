@@ -15,11 +15,12 @@ const UNITS = {
   LAVADO: { unit: 'lavado', factor: 1 },
 }
 
-async function request(path) {
+async function request(path, type) {
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(SITE + path, { headers: HEADERS })
-    if (res.ok) return res
-    if (attempt === 3) throw new Error(`Dia ${res.status} en ${path}`)
+    const contentType = res.headers.get('content-type') ?? ''
+    if (res.ok && contentType.includes(type)) return res
+    if (attempt === 3) throw new Error(`Dia ${res.status} (${contentType}) en ${path}`)
     await sleep(2000 * attempt)
   }
 }
@@ -29,7 +30,7 @@ function sleep(ms) {
 }
 
 async function fetchMenu() {
-  const html = await (await request(MENU_PAGE)).text()
+  const html = await (await request(MENU_PAGE, 'text/html')).text()
   const start = html.indexOf('"categoriesData":')
   if (start === -1) throw new Error('Dia: no se encontró el menú de categorías')
   const open = html.indexOf('{', start)
@@ -89,18 +90,27 @@ export const dia = {
     }
 
     const products = new Map()
+    const failed = []
     for (const l2 of subcategories) {
-      for (let page = 1, pages = 1; page <= pages; page++) {
-        const res = await request(`/api/v1/plp-back/reduced${l2.link}?page=${page}`)
-        const data = await res.json()
-        pages = data.pagination?.total_pages ?? 1
-        for (const item of data.plp_items ?? []) {
-          if (products.has(item.object_id) || !item.prices) continue
-          const canonical = names.get(categoryPath(item.url)) ?? { category: l2.category, subcategory: l2.name }
-          products.set(item.object_id, toProduct(item, canonical.category, canonical.subcategory))
+      try {
+        for (let page = 1, pages = 1; page <= pages; page++) {
+          const res = await request(`/api/v1/plp-back/reduced${l2.link}?page=${page}`, 'application/json')
+          const data = await res.json()
+          pages = data.pagination?.total_pages ?? 1
+          for (const item of data.plp_items ?? []) {
+            if (products.has(item.object_id) || !item.prices) continue
+            const canonical = names.get(categoryPath(item.url)) ?? { category: l2.category, subcategory: l2.name }
+            products.set(item.object_id, toProduct(item, canonical.category, canonical.subcategory))
+          }
+          await sleep(200)
         }
-        await sleep(200)
+      } catch (e) {
+        console.warn(`Dia: se omite ${l2.link}: ${e.message}`)
+        failed.push(l2.link)
       }
+    }
+    if (failed.length > subcategories.length * 0.1) {
+      throw new Error(`Dia: fallaron ${failed.length} de ${subcategories.length} subcategorías`)
     }
     // Anonymous visitors get the web's default postcode.
     return { products: [...products.values()], location: 'CP 28041' }

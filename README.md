@@ -20,6 +20,7 @@ npm run dev
 | --------- | ---------------------------------------- | ------------------------------------------- |
 | Mercadona | API interna de `tienda.mercadona.es`     | `MERCADONA_WAREHOUSE` (por defecto `bcn1`)  |
 | Dia       | API interna de `www.dia.es` (menú sacado del HTML de una categoría) | CP por defecto de la web (28041) |
+| Consum    | API interna de `tienda.consum.es` (catálogo completo paginado)       | Tienda online por defecto        |
 
 Las peticiones se identifican como `SuperPrecios (uso personal)`. Si una cadena bloquea ese tipo
 de peticiones (antibot), no se añade: no nos hacemos pasar por un navegador.

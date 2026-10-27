@@ -35,7 +35,14 @@ const cheapestByChain = computed(() => {
 
     <ul class="products">
       <li v-for="(p, i) in items.slice(0, shown)" :key="p.id" class="product" :class="{ best: i === 0 }">
-        <img :src="p.image" alt="" loading="lazy" width="56" height="56" />
+        <img
+          :src="p.image"
+          alt=""
+          loading="lazy"
+          width="56"
+          height="56"
+          @error="$event.target.style.visibility = 'hidden'"
+        />
         <div class="info">
           <a :href="p.url" target="_blank" rel="noopener" class="name">{{ p.name }}</a>
           <div class="meta">
