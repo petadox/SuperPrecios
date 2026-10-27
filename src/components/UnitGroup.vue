@@ -20,6 +20,8 @@ const cheapestByChain = computed(() => {
   for (const p of props.items) if (!seen.has(p.chain)) seen.set(p.chain, p)
   return [...seen.values()]
 })
+
+const bestPrice = computed(() => props.items[0]?.unitPrice)
 </script>
 
 <template>
@@ -27,14 +29,19 @@ const cheapestByChain = computed(() => {
     <h2>Precio por {{ unitLabel(unit) }} <span class="muted">· {{ items.length }}</span></h2>
 
     <ol v-if="cheapestByChain.length > 1" class="ranking">
-      <li v-for="(p, i) in cheapestByChain" :key="p.chain" :class="{ best: i === 0 }">
+      <li v-for="p in cheapestByChain" :key="p.chain" :class="{ best: p.unitPrice === bestPrice }">
         <span class="badge" :data-chain="p.chain">{{ chainName[p.chain] }}</span>
         desde <strong>{{ formatPrice(p.unitPrice) }}/{{ unit }}</strong>
       </li>
     </ol>
 
     <ul class="products">
-      <li v-for="(p, i) in items.slice(0, shown)" :key="p.id" class="product" :class="{ best: i === 0 }">
+      <li
+        v-for="p in items.slice(0, shown)"
+        :key="p.id"
+        class="product"
+        :class="{ best: p.unitPrice === bestPrice }"
+      >
         <img
           :src="p.image"
           alt=""

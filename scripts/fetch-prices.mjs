@@ -1,24 +1,44 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { bonarea } from './chains/bonarea.mjs'
+import { caprabo } from './chains/caprabo.mjs'
 import { consum } from './chains/consum.mjs'
 import { dia } from './chains/dia.mjs'
+import { eroski } from './chains/eroski.mjs'
 import { mercadona } from './chains/mercadona.mjs'
 
 // Add a new chain here: an object with id, name and fetchProducts().
-const CHAINS = [mercadona, dia, consum]
+const CHAINS = [mercadona, dia, consum, eroski, caprabo, bonarea]
 
 const OUT_DIR = new URL('../public/data/', import.meta.url)
+const INDEX = new URL('index.json', OUT_DIR)
+
+// `npm run fetch -- dia consum` refreshes only those chains and keeps the rest.
+const only = process.argv.slice(2)
+const selected = only.length ? CHAINS.filter((c) => only.includes(c.id)) : CHAINS
+if (selected.length === 0) throw new Error(`Cadenas desconocidas: ${only.join(', ')}`)
 
 await mkdir(OUT_DIR, { recursive: true })
 
-const index = { updatedAt: new Date().toISOString(), chains: [] }
+// Each chain is a different site, so they are fetched in parallel.
+const results = await Promise.all(
+  selected.map(async (chain) => {
+    const started = Date.now()
+    const { products, location } = await chain.fetchProducts()
+    if (products.length === 0) throw new Error(`${chain.name}: 0 productos`)
+    await writeFile(new URL(`${chain.id}.json`, OUT_DIR), JSON.stringify(products))
+    console.log(`${chain.name}: ${products.length} productos en ${((Date.now() - started) / 1000).toFixed(0)}s`)
+    return { id: chain.id, name: chain.name, count: products.length, location }
+  }),
+)
 
-for (const chain of CHAINS) {
-  const started = Date.now()
-  const { products, location } = await chain.fetchProducts()
-  if (products.length === 0) throw new Error(`${chain.name}: 0 productos`)
-  await writeFile(new URL(`${chain.id}.json`, OUT_DIR), JSON.stringify(products))
-  index.chains.push({ id: chain.id, name: chain.name, count: products.length, location })
-  console.log(`${chain.name}: ${products.length} productos en ${((Date.now() - started) / 1000).toFixed(0)}s`)
+const previous = only.length ? await readIndex() : []
+const chains = CHAINS.map((c) => results.find((r) => r.id === c.id) ?? previous.find((p) => p.id === c.id)).filter(Boolean)
+await writeFile(INDEX, JSON.stringify({ updatedAt: new Date().toISOString(), chains }, null, 2))
+
+async function readIndex() {
+  try {
+    return JSON.parse(await readFile(INDEX, 'utf8')).chains
+  } catch {
+    return []
+  }
 }
-
-await writeFile(new URL('index.json', OUT_DIR), JSON.stringify(index, null, 2))
