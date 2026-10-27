@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises'
+import { dia } from './chains/dia.mjs'
 import { mercadona } from './chains/mercadona.mjs'
 
 // Add a new chain here: an object with id, name and fetchProducts().
-const CHAINS = [mercadona]
+const CHAINS = [mercadona, dia]
 
 const OUT_DIR = new URL('../public/data/', import.meta.url)
 

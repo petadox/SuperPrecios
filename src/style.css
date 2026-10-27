@@ -7,6 +7,7 @@
   --accent: #1f7a4d;
   --best: #e8f5ee;
   --chain-mercadona: #00843d;
+  --chain-dia: #d6001c;
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.4;
@@ -22,6 +23,7 @@
     --accent: #4fc488;
     --best: #1c3326;
     --chain-mercadona: #2fb56b;
+    --chain-dia: #ff5a5f;
   }
 }
 
@@ -126,6 +128,10 @@ h2 {
 
 [data-chain='mercadona'] {
   --chain-color: var(--chain-mercadona);
+}
+
+[data-chain='dia'] {
+  --chain-color: var(--chain-dia);
 }
 
 .group {
