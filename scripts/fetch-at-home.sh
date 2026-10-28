@@ -19,7 +19,8 @@ node scripts/home-data.mjs pack "$out"
 git -C "$out" init -q -b home-data
 git -C "$out" add -A
 git -C "$out" commit -qm "Precios de Eroski y Caprabo descargados desde casa"
-git -C "$out" push -qf "$(git remote get-url origin)" home-data
+# Over ~1 MB, git's default 1 MB HTTP buffer makes GitHub answer 400.
+git -C "$out" -c http.postBuffer=157286400 push -qf "$(git remote get-url origin)" home-data
 echo "== $(date '+%F %T') subido a home-data, publicando"
 
 gh workflow run deploy.yml -R petadox/SuperPrecios
