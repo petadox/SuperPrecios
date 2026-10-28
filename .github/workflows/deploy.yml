@@ -29,7 +29,8 @@ jobs:
 
       - run: npm ci
 
-      # If a chain fails the job fails and yesterday's site stays online.
+      # A chain that fails is skipped with a warning; if all fail the job fails
+      # and yesterday's site stays online.
       - run: npm run fetch
 
       - run: npm run build

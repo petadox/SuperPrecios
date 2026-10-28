@@ -19,8 +19,9 @@ if (selected.length === 0) throw new Error(`Cadenas desconocidas: ${only.join(',
 
 await mkdir(OUT_DIR, { recursive: true })
 
-// Each chain is a different site, so they are fetched in parallel.
-const results = await Promise.all(
+// Each chain is a different site, so they are fetched in parallel. A chain that
+// fails is left out so the others still get published.
+const settled = await Promise.allSettled(
   selected.map(async (chain) => {
     const started = Date.now()
     const { products, location } = await chain.fetchProducts()
@@ -30,6 +31,11 @@ const results = await Promise.all(
     return { id: chain.id, name: chain.name, count: products.length, location }
   }),
 )
+
+const results = settled.filter((s) => s.status === 'fulfilled').map((s) => s.value)
+const failures = settled.filter((s) => s.status === 'rejected')
+for (const { reason } of failures) console.error(`::warning::Se omite una cadena: ${reason.message}`)
+if (results.length === 0) throw new Error('No se pudo descargar ninguna cadena')
 
 const previous = only.length ? await readIndex() : []
 const chains = CHAINS.map((c) => results.find((r) => r.id === c.id) ?? previous.find((p) => p.id === c.id)).filter(Boolean)
