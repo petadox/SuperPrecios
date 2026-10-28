@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 430" role="img" aria-label="Cesta de la compra con pan, puerro, leche, tomates, limón y manzana">
+  <ellipse cx="240" cy="398" rx="175" ry="16" fill="#3b2a20" opacity="0.12"/>
+
+  <path d="M118 228 Q240 34 362 228" fill="none" stroke="#a9692f" stroke-width="18" stroke-linecap="round"/>
+  <path d="M118 228 Q240 34 362 228" fill="none" stroke="#c98b4a" stroke-width="8" stroke-linecap="round" stroke-dasharray="14 10"/>
+
+  <g transform="rotate(-24 196 190)">
+    <rect x="170" y="70" width="50" height="210" rx="25" fill="#e3a85b"/>
+    <rect x="178" y="78" width="14" height="190" rx="7" fill="#efc489" opacity="0.7"/>
+    <path d="M178 112 l34 -12 M178 150 l34 -12 M178 188 l34 -12 M178 226 l34 -12" stroke="#b97b35" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <g transform="rotate(16 330 190)">
+    <path d="M318 62 q-30 40 -6 96 l14 0 q-4 -60 -8 -96z" fill="#6b8f3a"/>
+    <path d="M330 56 q12 50 2 102 l-12 0 q10 -50 10 -102z" fill="#8bb04e"/>
+    <path d="M342 70 q22 40 2 88 l-12 0 q8 -40 10 -88z" fill="#5d7f31"/>
+    <rect x="312" y="150" width="32" height="96" rx="12" fill="#f4f0dc"/>
+    <path d="M318 166 v60 M328 166 v66 M338 166 v58" stroke="#e1dcbf" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <rect x="236" y="104" width="34" height="30" rx="6" fill="#fffaf0" stroke="#e6dac3" stroke-width="3"/>
+    <rect x="232" y="92" width="42" height="16" rx="5" fill="#4f86c6"/>
+    <path d="M226 160 q0 -26 20 -30 h14 q20 4 20 30 v66 h-54z" fill="#fffaf0" stroke="#e6dac3" stroke-width="3"/>
+    <rect x="232" y="172" width="42" height="34" rx="6" fill="#d6e5f5"/>
+    <path d="M243 186 q10 12 20 0" fill="none" stroke="#4f86c6" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+
+  <circle cx="132" cy="222" r="36" fill="#d9472f"/>
+  <circle cx="120" cy="208" r="9" fill="#f08a6f" opacity="0.7"/>
+  <path d="M132 188 l-7 -9 l8 4 l2 -10 l4 9 l9 -4 l-6 9" fill="#5d7f31"/>
+
+  <circle cx="186" cy="232" r="29" fill="#e65a3e"/>
+  <circle cx="177" cy="221" r="7" fill="#f6997e" opacity="0.7"/>
+  <path d="M186 205 l-6 -7 l7 3 l2 -8 l3 8 l8 -3 l-5 7" fill="#5d7f31"/>
+
+  <ellipse cx="300" cy="226" rx="30" ry="28" fill="#9fc552"/>
+  <circle cx="290" cy="215" r="7" fill="#c6e186" opacity="0.8"/>
+  <path d="M300 199 q2 -10 8 -14" stroke="#6b4a2b" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M306 190 q14 -8 22 2 q-12 8 -22 -2z" fill="#6b8f3a"/>
+
+  <g transform="rotate(-18 358 224)">
+    <ellipse cx="358" cy="224" rx="34" ry="25" fill="#f2c94c"/>
+    <ellipse cx="348" cy="214" rx="10" ry="6" fill="#f8e08e" opacity="0.8"/>
+    <path d="M323 224 q-6 0 -8 -4 M393 224 q6 0 8 4" stroke="#e0b232" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <g transform="translate(288 146)">
+    <line x1="0" y1="0" x2="4" y2="16" stroke="#7a5233" stroke-width="2.5"/>
+    <g transform="rotate(12 4 16)">
+      <path d="M-16 16 h40 a7 7 0 0 1 7 7 v34 a7 7 0 0 1 -7 7 h-40 a7 7 0 0 1 -7 -7 v-34 a7 7 0 0 1 7 -7z" fill="#fbf3e4" stroke="#c8643b" stroke-width="3"/>
+      <circle cx="4" cy="25" r="3" fill="#c8643b"/>
+      <text x="4" y="57" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#c8643b">€</text>
+    </g>
+  </g>
+
+  <path d="M96 246 L384 246 L356 372 Q351 390 333 390 L147 390 Q129 390 124 372 Z" fill="#c98b4a"/>
+  <path d="M110 288 H370 M116 322 H364 M122 356 H358" stroke="#a9692f" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+  <path d="M160 254 l-8 128 M210 254 l-3 130 M260 254 l3 130 M310 254 l8 128" stroke="#a9692f" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <rect x="82" y="226" width="316" height="32" rx="16" fill="#b5763a"/>
+  <rect x="96" y="232" width="288" height="8" rx="4" fill="#d29a5e" opacity="0.6"/>
+
+  <path d="M62 380 q16 -24 40 -14 q-14 22 -40 14z" fill="#8bb04e"/>
+  <path d="M66 380 q16 -6 32 -12" stroke="#5d7f31" stroke-width="2.5" fill="none"/>
+  <path d="M410 372 q-18 -22 -40 -8 q16 20 40 8z" fill="#6b8f3a"/>
+  <circle cx="420" cy="350" r="9" fill="#d9472f"/>
+  <circle cx="404" cy="356" r="7" fill="#e65a3e"/>
+</svg>

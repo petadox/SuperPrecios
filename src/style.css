@@ -96,55 +96,6 @@ h2 {
   text-decoration: underline;
 }
 
-.gate {
-  display: grid;
-  min-height: 100vh;
-  min-height: 100dvh;
-  place-items: center;
-  padding: 24px 16px;
-}
-
-.gate-card {
-  width: 100%;
-  max-width: 420px;
-}
-
-.gate-card h1 {
-  font-size: 2rem;
-}
-
-.gate-lead {
-  margin: 8px 0 28px;
-  font-size: 1.15rem;
-  color: var(--muted);
-}
-
-.gate-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.gate-label {
-  font-weight: 600;
-}
-
-.gate-button {
-  font: inherit;
-  font-weight: 600;
-  padding: 12px 14px;
-  color: var(--bg);
-  background: var(--accent);
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.gate-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
 .footer-list {
   margin: 4px 0 0;
   padding-left: 18px;
