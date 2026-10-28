@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { WrongPasswordError, unlock } from '../catalog'
 
 const STORAGE_KEY = 'superprecios:password'
@@ -42,10 +42,30 @@ async function enter(value, fromStorage = false) {
   }
 }
 
+// The ntfy notification links to …/#clave=<password>. The fragment never reaches
+// the server, and it is wiped from the address bar straight away.
+function fromLink() {
+  const value = new URLSearchParams(location.hash.slice(1)).get('clave')
+  if (value) history.replaceState(null, '', location.pathname + location.search)
+  return value
+}
+
+function enterFromLink() {
+  const linked = fromLink()
+  if (!linked) return false
+  password.value = linked
+  enter(linked)
+  return true
+}
+
 onMounted(() => {
+  window.addEventListener('hashchange', enterFromLink)
+  if (enterFromLink()) return
   const value = saved()
   if (value) enter(value, true)
 })
+
+onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 </script>
 
 <template>

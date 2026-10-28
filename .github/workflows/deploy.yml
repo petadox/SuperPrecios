@@ -80,9 +80,11 @@ jobs:
             echo "::warning::Falta el secreto NTFY_TOPIC: no se envía la contraseña"
             exit 0
           fi
+          # Only the password in the body, so it copies cleanly; tapping the
+          # notification opens the site already signed in.
           curl -fsS -o /dev/null \
-            -H "Title: SuperPrecios" \
+            -H "Title: SuperPrecios · contraseña de hoy" \
             -H "Tags: shopping_cart" \
-            -H "Click: $PAGE_URL" \
-            -d "Contraseña de hoy: $SITE_PASSWORD" \
+            -H "Click: ${PAGE_URL}#clave=${SITE_PASSWORD}" \
+            -d "$SITE_PASSWORD" \
             "https://ntfy.sh/$NTFY_TOPIC"
