@@ -3,35 +3,64 @@
 Compara el precio por kilo, litro o unidad de los productos de varios supermercados.
 
 Vue 3 + Vite, publicado en GitHub Pages. Los supermercados no permiten llamar a sus APIs desde el
-navegador, así que una GitHub Action descarga los catálogos cada día (05:00 UTC), los guarda como
-JSON en `public/data/` y vuelve a publicar la web.
+navegador, así que una GitHub Action descarga los catálogos cada día (05:00 UTC) y vuelve a
+publicar la web.
+
+## Contraseña y datos cifrados
+
+GitHub Pages es público, así que los precios se publican **cifrados** (AES-GCM, clave derivada con
+PBKDF2) y el navegador los descifra con la contraseña. Sin ella no se pueden leer, aunque se
+descarguen los ficheros de `data/`.
+
+La contraseña **cambia cada día** (hora de Madrid): sale de `HMAC(PASSWORD_SEED, fecha)` y son
+cuatro palabras de comida y dos cifras. Cada publicación la envía al móvil con
+[ntfy](https://ntfy.sh): instala la app y suscríbete al canal guardado en el secreto `NTFY_TOPIC`.
+Para verla en el Mac:
+
+```bash
+PASSWORD_SEED=$(cat ~/.config/superprecios/password-seed) npm run password
+```
+
+Secretos del repo (Settings → Secrets and variables → Actions):
+
+| Secreto         | Para qué                                                        |
+| --------------- | --------------------------------------------------------------- |
+| `PASSWORD_SEED` | Semilla de la contraseña diaria                                  |
+| `NTFY_TOPIC`    | Canal de ntfy al que llega la contraseña                         |
+| `HOME_DATA_KEY` | Clave de los datos que se suben desde casa (rama `home-data`)    |
+
+Copia local en `~/.config/superprecios/`.
 
 ## Desarrollo
 
 ```bash
 npm install
-npm run fetch               # descarga los precios de todas las cadenas a public/data/
-npm run fetch -- dia consum # solo esas cadenas, conserva las demás
+npm run fetch                      # descarga todas las cadenas a data/ (sin cifrar, no se publica)
+npm run fetch -- dia lidl          # solo esas cadenas, conserva las demás
+SITE_PASSWORD=prueba npm run encrypt   # cifra data/ en public/data/
 npm run dev
 ```
 
 ## Cadenas
 
-| Cadena    | Fuente                                   | Zona                                        |
-| --------- | ---------------------------------------- | ------------------------------------------- |
-| Mercadona | API interna de `tienda.mercadona.es`     | `MERCADONA_WAREHOUSE` (por defecto `bcn1`)  |
-| Dia       | API interna de `www.dia.es` (menú sacado del HTML de una categoría) | CP por defecto de la web (28041) |
-| Consum    | API interna de `tienda.consum.es` (catálogo completo paginado)       | Tienda online por defecto        |
-| Eroski    | HTML de `supermercado.eroski.es`, solo alimentación y bebidas. Sin precio por kg/L en la web: se usa el de la tarjeta cuando lo muestra (frescos) y si no se deduce de la cantidad del nombre; los productos sin cantidad legible se descartan | Tienda online por defecto |
-| Caprabo   | Igual que Eroski (mismo grupo y misma web): `capraboacasa.com`, código compartido en `eroski-platform.mjs` | Tienda online por defecto |
-| bonÀrea   | `POST /es/shop/ShoppingBody` de `bonarea-online.com` (la misma llamada de solo lectura que hace su web al abrir una categoría). Alimentación, bebidas, droguería e higiene | Tienda online |
+| Cadena    | Fuente                                                                               | Zona                                       |
+| --------- | ------------------------------------------------------------------------------------ | ------------------------------------------ |
+| Mercadona | API interna de `tienda.mercadona.es`                                                 | `MERCADONA_WAREHOUSE` (por defecto `bcn1`) |
+| Dia       | API interna de `www.dia.es` (menú sacado del HTML de una categoría)                  | CP por defecto de la web (28041)           |
+| Consum    | API interna de `tienda.consum.es` (catálogo completo paginado)                       | Tienda online por defecto                  |
+| Eroski    | HTML de `supermercado.eroski.es`, solo alimentación y bebidas. Precio por kg/L de la tarjeta cuando lo muestra; si no, deducido de la cantidad del nombre | Tienda online por defecto |
+| Caprabo   | Igual que Eroski (mismo grupo y misma web): `capraboacasa.com`                       | Tienda online por defecto                  |
+| bonÀrea   | `POST /es/shop/ShoppingBody` de `bonarea-online.com` (la llamada de solo lectura de su web) | Tienda online                        |
+| Lidl      | Solo las **ofertas semanales** de alimentación de `lidl.es`: no vende comida online  | Ofertas de la semana                       |
 
-Cadenas que no están porque bloquean las peticiones identificadas (403 en categorías y búsqueda):
-Alcampo, Bonpreu/Esclat (ambas en la plataforma Ocado tras CloudFront), Carrefour y Alimerka
-(Cloudflare). Lidl y Aldi no venden alimentación online en España.
+**Eroski y Caprabo** bloquean los servidores de GitHub (403), así que se descargan desde casa con
+`scripts/fetch-at-home.sh` y llegan a la Action cifrados con `HOME_DATA_KEY` en la rama
+`home-data`.
 
-Las peticiones se identifican como `SuperPrecios (uso personal)`. Si una cadena bloquea ese tipo
-de peticiones (antibot), no se añade: no nos hacemos pasar por un navegador.
+Las peticiones se identifican como `SuperPrecios (uso personal)`; no nos hacemos pasar por un
+navegador. Cadenas que no están porque su cortafuegos rechaza las peticiones identificadas:
+Alcampo y Bonpreu/Esclat (Ocado tras CloudFront, aunque su robots.txt permite rastrear),
+Carrefour y Alimerka (Cloudflare). Aldi no vende alimentación online en España.
 
 ### Añadir una cadena
 
@@ -54,11 +83,14 @@ de peticiones (antibot), no se añade: no nos hacemos pasar por un navegador.
    }
    ```
 
+   Si la cantidad solo viene en texto ("pack 6x1 litro"), usa `parseQuantity` de
+   `scripts/chains/quantity.mjs`.
+
 2. Añádela a `CHAINS` en `scripts/fetch-prices.mjs`.
 3. Dale un color en `src/style.css` (`--chain-<id>` y `[data-chain='<id>']`).
 
 ## Despliegue
 
 Cada push a `main`, la ejecución diaria y el botón *Run workflow* lanzan
-`.github/workflows/deploy.yml`. Configuración inicial del repo: **Settings → Pages → Source:
-GitHub Actions**.
+`.github/workflows/deploy.yml`: trae `home-data`, descarga el resto, cifra con la contraseña del
+día, publica en Pages y la envía por ntfy.

@@ -17,36 +17,72 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # A chain that fails is skipped with a warning; if all fail the job fails
-      # and yesterday's site stays online.
-      - run: npm run fetch
-
-      - run: npm run build
-        env:
-          BASE_PATH: /${{ github.event.repository.name }}/
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Eroski and Caprabo block GitHub's servers; they are fetched from home
+      # (scripts/fetch-at-home.sh) and arrive encrypted on the home-data branch.
+      - name: Bring in the chains fetched at home
+        env:
+          HOME_DATA_KEY: ${{ secrets.HOME_DATA_KEY }}
+        run: |
+          if git fetch --depth 1 origin home-data; then
+            mkdir -p home-data
+            git archive FETCH_HEAD | tar -x -C home-data
+            node scripts/home-data.mjs unpack home-data
+          else
+            echo "::warning::No hay rama home-data todavía"
+          fi
+
+      # A chain that fails is skipped with a warning; if all fail the job fails
+      # and yesterday's site stays online.
+      - run: npm run fetch
+
+      - name: Today's password
+        env:
+          PASSWORD_SEED: ${{ secrets.PASSWORD_SEED }}
+        run: |
+          password="$(node scripts/password.mjs)"
+          echo "::add-mask::$password"
+          echo "SITE_PASSWORD=$password" >> "$GITHUB_ENV"
+
+      - run: npm run encrypt
+
+      - run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Send today's password to the phone
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          if [ -z "$NTFY_TOPIC" ]; then
+            echo "::warning::Falta el secreto NTFY_TOPIC: no se envía la contraseña"
+            exit 0
+          fi
+          curl -fsS -o /dev/null \
+            -H "Title: SuperPrecios" \
+            -H "Tags: shopping_cart" \
+            -H "Click: $PAGE_URL" \
+            -d "Contraseña de hoy: $SITE_PASSWORD" \
+            "https://ntfy.sh/$NTFY_TOPIC"
