@@ -12,3 +12,6 @@ home-data
 
 # Encrypted copy of data/ from `npm run encrypt`
 public/data
+
+# Work files of a classification round (CLASIFICACION.md)
+classify-work

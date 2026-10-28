@@ -1,6 +1,6 @@
 import { ref, shallowRef } from 'vue'
 import { decryptJson, fromBase64, keyFromPassword } from './crypto'
-import { normalize } from './utils/text'
+import { searchText } from './search'
 
 const base = `${import.meta.env.BASE_URL}data/`
 
@@ -23,7 +23,7 @@ export async function unlock(password) {
   const lists = await Promise.all(index.chains.map(async (c) => decryptJson(key, await bytes(`${c.id}.bin`))))
   products.value = lists.flat().map((p) => ({
     ...p,
-    search: normalize([p.name, p.format].join(' ')),
+    search: searchText(p),
   }))
   chains.value = index.chains
 }

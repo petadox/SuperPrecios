@@ -33,19 +33,14 @@ Copia local en `~/.config/superprecios/`.
 
 ## Tipos de producto
 
-La búsqueda agrupa los productos que son lo mismo ("Leche entera Hacendado", "Leche Entera Brik 1 L
-Consum", "Leche entera Dia Láctea pack 6 x 1 L" → *Leche entera*). `scripts/product-types.mjs`
-asigna a cada producto un tipo quitando de su nombre:
+La búsqueda agrupa los productos que son lo mismo: "Leche entera Hacendado", "Leche Entera Brik
+1 L Consum" y "Leche entera Dia Láctea pack 6 x 1 L" van a la tarjeta *Leche entera*, y buscando
+"coca cola" sale una tarjeta *Coca-Cola* con el precio de cada supermercado. La clasificación la
+hace Claude a mano, una vez, y se guarda cifrada en `classification.bin`: ver
+[CLASIFICACION.md](CLASIFICACION.md).
 
-- la marca: del campo `brand` (Dia, Consum, Eroski, Caprabo), las palabras en MAYÚSCULAS
-  (Eroski, Caprabo, Lidl) y `KNOWN_BRANDS` (marcas propias de Mercadona). Una palabra suelta solo
-  cuenta como marca si suele aparecer como tal, para no borrar "extra" o "natural";
-- formato y cantidades (`PACKAGING`, números) y palabras de relleno u origen (`NOISE`).
-
-Lo que queda, sin acentos ni plurales y sin importar el orden, es la clave del tipo. Las tarjetas
-se ordenan en `src/search.js`: el tipo exacto, luego los que empiezan por lo buscado, y dentro de
-cada nivel los que están en más supermercados. Para afinar, edita esas listas y prueba el
-resultado con `npm run fetch` + `npm run encrypt`.
+Las tarjetas se ordenan en `src/search.js`: la que es exactamente lo buscado, luego las que
+empiezan por lo buscado, y dentro de cada nivel las que están en más supermercados.
 
 ## Desarrollo
 

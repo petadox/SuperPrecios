@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import basket from '../assets/market-basket.svg'
 import { chains, products } from '../catalog'
-import { groupByType, groupByUnit, matchProducts } from '../search'
+import { groupByUnit, groupProducts, matchProducts } from '../search'
 import { formatDate, formatPrice } from '../utils/text'
 import ProductView from './ProductView.vue'
 
@@ -81,7 +81,7 @@ function listNames(names) {
 // One card per kind of product ("Leche entera", "Leche desnatada sin lactosa"…),
 // showing the cheapest option in the unit most of its products are sold by.
 const types = computed(() =>
-  groupByType(matches.value, query.value).map((t) => {
+  groupProducts(matches.value, query.value).map((t) => {
     const units = groupByUnit(t.items)
     const main = units[0]
     const best = main.items[0]
@@ -90,7 +90,7 @@ const types = computed(() =>
   }),
 )
 
-const selected = computed(() => types.value.find((t) => t.type === openType.value))
+const selected = computed(() => types.value.find((t) => t.key === openType.value))
 
 function toggleChain(id) {
   const next = new Set(hiddenChains.value)
@@ -158,8 +158,8 @@ function toggleChain(id) {
         {{ matches.length }} productos
       </p>
       <ul class="result-list">
-        <li v-for="t in types.slice(0, shown)" :key="t.type">
-          <button class="result-card" type="button" @click="openProduct(t.type)">
+        <li v-for="t in types.slice(0, shown)" :key="t.key">
+          <button class="result-card" type="button" @click="openProduct(t.key)">
             <img
               :src="t.best.image"
               alt=""

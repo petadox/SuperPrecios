@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { KDF_ITERATIONS, encryptJson, keyFromPassword, toBase64 } from '../src/crypto.js'
-import { assignTypes } from './product-types.mjs'
+import { applyClassification, loadClassification } from './classification.mjs'
 
 // Publishes data/ into public/data/ encrypted with SITE_PASSWORD, so the
 // prices can only be read with the password even though Pages is public.
@@ -21,8 +21,12 @@ const byChain = await Promise.all(
   index.chains.map(async (chain) => JSON.parse(await readFile(new URL(`${chain.id}.json`, DATA_DIR), 'utf8'))),
 )
 
-// Brands are learnt from every chain at once, so types are assigned together.
-assignTypes(byChain.flat())
+// Products new since the last classification are counted so the workflow
+// can ask for another round once there are enough of them.
+const missing = applyClassification(byChain.flat(), await loadClassification())
+const unclassified = [...new Set(missing)]
+await writeFile(new URL('unclassified.json', DATA_DIR), JSON.stringify(unclassified))
+console.log(`Sin clasificar: ${unclassified.length} nombres`)
 
 await writeFile(new URL('crypto.json', OUT_DIR), JSON.stringify({ salt: toBase64(salt), iterations: KDF_ITERATIONS }))
 await writeFile(new URL('index.bin', OUT_DIR), await encryptJson(key, index))

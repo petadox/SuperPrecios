@@ -59,6 +59,8 @@ jobs:
           echo "SITE_PASSWORD=$password" >> "$GITHUB_ENV"
 
       - run: npm run encrypt
+        env:
+          HOME_DATA_KEY: ${{ secrets.HOME_DATA_KEY }}
 
       - run: npm run build
         env:
@@ -88,3 +90,21 @@ jobs:
             -H "Click: ${PAGE_URL}#clave=${SITE_PASSWORD}" \
             -d "$SITE_PASSWORD" \
             "https://ntfy.sh/$NTFY_TOPIC"
+
+      # Products are classified by hand with Claude (CLASIFICACION.md); once
+      # enough new ones pile up, ask for another round.
+      - name: Ask for a classification round
+        if: github.event_name == 'schedule'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          THRESHOLD: 300
+        run: |
+          count="$(node -e 'console.log(require("./data/unclassified.json").length)')"
+          echo "Productos sin clasificar: $count"
+          if [ -n "$NTFY_TOPIC" ] && [ "$count" -ge "$THRESHOLD" ]; then
+            curl -fsS -o /dev/null \
+              -H "Title: SuperPrecios" \
+              -H "Tags: label" \
+              -d "Hay $count productos nuevos sin clasificar. Pídele a Claude que los clasifique." \
+              "https://ntfy.sh/$NTFY_TOPIC"
+          fi
