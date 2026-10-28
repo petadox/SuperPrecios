@@ -8,6 +8,7 @@ const props = defineProps({
   unit: { type: String, required: true },
   items: { type: Array, required: true },
   chains: { type: Array, required: true },
+  showAll: { type: Boolean, default: false },
 })
 
 const shown = ref(PAGE)
@@ -21,14 +22,21 @@ const cheapestByChain = computed(() => {
   return [...seen.values()]
 })
 
+const rows = computed(() => (props.showAll ? props.items.slice(0, shown.value) : cheapestByChain.value))
+
 const bestPrice = computed(() => props.items[0]?.unitPrice)
 </script>
 
 <template>
   <section class="group">
-    <h2>Precio por {{ unitLabel(unit) }} <span class="muted">· {{ items.length }}</span></h2>
+    <h2>
+      Precio por {{ unitLabel(unit) }}
+      <span class="muted">
+        · {{ showAll ? `${items.length} productos` : `${cheapestByChain.length} supermercados` }}
+      </span>
+    </h2>
 
-    <ol v-if="cheapestByChain.length > 1" class="ranking">
+    <ol v-if="showAll && cheapestByChain.length > 1" class="ranking">
       <li v-for="p in cheapestByChain" :key="p.chain" :class="{ best: p.unitPrice === bestPrice }">
         <span class="badge" :data-chain="p.chain">{{ chainName[p.chain] }}</span>
         desde <strong>{{ formatPrice(p.unitPrice) }}/{{ unit }}</strong>
@@ -36,12 +44,7 @@ const bestPrice = computed(() => props.items[0]?.unitPrice)
     </ol>
 
     <ul class="products">
-      <li
-        v-for="p in items.slice(0, shown)"
-        :key="p.id"
-        class="product"
-        :class="{ best: p.unitPrice === bestPrice }"
-      >
+      <li v-for="p in rows" :key="p.id" class="product" :class="{ best: p.unitPrice === bestPrice }">
         <img
           :src="p.image"
           alt=""
@@ -64,7 +67,7 @@ const bestPrice = computed(() => props.items[0]?.unitPrice)
       </li>
     </ul>
 
-    <button v-if="items.length > shown" class="more" @click="shown += PAGE">
+    <button v-if="showAll && items.length > shown" class="more" @click="shown += PAGE">
       Mostrar más ({{ items.length - shown }})
     </button>
   </section>

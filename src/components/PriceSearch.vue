@@ -1,9 +1,9 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import basket from '../assets/market-basket.svg'
 import { chains, products } from '../catalog'
-import { formatDate, normalize } from '../utils/text'
-import UnitGroup from './UnitGroup.vue'
+import { formatDate, formatPrice, normalize } from '../utils/text'
+import ProductView from './ProductView.vue'
 
 const SUGGESTIONS = ['leche entera', 'aceite oliva virgen extra', 'huevos', 'arroz', 'atún', 'café molido', 'papel higiénico', 'detergente']
 
@@ -12,15 +12,51 @@ const emit = defineEmits(['logout'])
 const params = new URLSearchParams(location.search)
 const query = ref(params.get('q') ?? '')
 const category = ref(params.get('cat') ?? '')
+const open = ref(params.get('ver') === '1')
 const hiddenChains = ref(new Set())
 
-watch([query, category], () => {
+function url(withProduct) {
   const next = new URLSearchParams()
   if (query.value.trim()) next.set('q', query.value.trim())
   if (category.value) next.set('cat', category.value)
+  if (withProduct) next.set('ver', '1')
   const search = next.toString()
-  history.replaceState(null, '', search ? `?${search}` : location.pathname)
+  return search ? `?${search}` : location.pathname
+}
+
+watch([query, category], () => {
+  open.value = false
+  history.replaceState(null, '', url(false))
 })
+
+// The product view gets its own history entry, so the phone's back gesture
+// returns to the search instead of leaving the site.
+let pushed = false
+
+function openProduct() {
+  open.value = true
+  pushed = true
+  history.pushState(null, '', url(true))
+  window.scrollTo({ top: 0 })
+}
+
+// Opened from a shared link there is no search entry to go back to.
+function closeProduct() {
+  if (pushed) {
+    history.back()
+    return
+  }
+  open.value = false
+  history.replaceState(null, '', url(false))
+}
+
+function syncFromHistory() {
+  open.value = new URLSearchParams(location.search).get('ver') === '1'
+  if (!open.value) pushed = false
+}
+
+onMounted(() => window.addEventListener('popstate', syncFromHistory))
+onUnmounted(() => window.removeEventListener('popstate', syncFromHistory))
 
 const categories = computed(() =>
   [...new Set(products.value.map((p) => p.category))].sort((a, b) => a.localeCompare(b, 'es')),
@@ -46,6 +82,28 @@ const groups = computed(() => {
   return [...byUnit]
     .map(([unit, items]) => ({ unit, items: items.sort((a, b) => a.unitPrice - b.unitPrice) }))
     .sort((a, b) => b.items.length - a.items.length)
+})
+
+const title = computed(() => {
+  const text = query.value.trim() || category.value
+  return text.charAt(0).toUpperCase() + text.slice(1)
+})
+
+const chainName = computed(() => Object.fromEntries(chains.value.map((c) => [c.id, c.name])))
+
+// What the single result card shows: the cheapest option in the unit most
+// products are sold by.
+const summary = computed(() => {
+  const main = groups.value[0]
+  if (!main) return null
+  const best = main.items[0]
+  const tied = new Set(main.items.filter((p) => p.unitPrice === best.unitPrice).map((p) => chainName.value[p.chain]))
+  return {
+    best,
+    unit: main.unit,
+    winners: [...tied].join(', '),
+    chainCount: new Set(matches.value.map((p) => p.chain)).size,
+  }
 })
 
 function toggleChain(id) {
@@ -97,18 +155,38 @@ function toggleChain(id) {
       </div>
     </section>
 
-    <p v-else-if="matches.length === 0" class="muted">No hay productos que coincidan.</p>
+    <p v-else-if="!summary" class="muted">No hay productos que coincidan.</p>
 
-    <template v-else>
-      <p class="muted count">{{ matches.length }} productos</p>
-      <UnitGroup
-        v-for="g in groups"
-        :key="g.unit + query + category"
-        :unit="g.unit"
-        :items="g.items"
-        :chains="chains"
+    <ProductView
+      v-else-if="open"
+      :title="title"
+      :groups="groups"
+      :chains="chains"
+      :total="matches.length"
+      @back="closeProduct"
+    />
+
+    <button v-else class="result-card" type="button" @click="openProduct">
+      <img
+        :src="summary.best.image"
+        alt=""
+        class="result-image"
+        width="72"
+        height="72"
+        @error="$event.target.style.visibility = 'hidden'"
       />
-    </template>
+      <span class="result-body">
+        <span class="result-title">{{ title }}</span>
+        <span class="result-price">
+          Desde <strong>{{ formatPrice(summary.best.unitPrice) }}/{{ summary.unit }}</strong> en {{ summary.winners }}
+        </span>
+        <span class="muted result-meta">
+          {{ matches.length }} productos en {{ summary.chainCount }}
+          {{ summary.chainCount === 1 ? 'supermercado' : 'supermercados' }}
+        </span>
+      </span>
+      <span class="result-chevron" aria-hidden="true">›</span>
+    </button>
   </main>
 
   <footer class="wrap footer muted">
