@@ -83,7 +83,7 @@ jobs:
           # Only the password in the body, so it copies cleanly; tapping the
           # notification opens the site already signed in.
           curl -fsS -o /dev/null \
-            -H "Title: SuperPrecios · contraseña de hoy" \
+            -H "Title: SuperPrecios" \
             -H "Tags: shopping_cart" \
             -H "Click: ${PAGE_URL}#clave=${SITE_PASSWORD}" \
             -d "$SITE_PASSWORD" \
