@@ -1,5 +1,6 @@
+import { fetchOk, retry } from './http.mjs'
+
 const API = 'https://tienda.consum.es/api/rest/V1.0'
-const HEADERS = { 'User-Agent': 'SuperPrecios (uso personal)' }
 const PAGE = 100
 
 const UNITS = {
@@ -18,12 +19,7 @@ const UNITS = {
 const SKIP_SECTIONS = new Set(['Ahora más barato'])
 
 async function get(path) {
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(API + path, { headers: HEADERS })
-    if (res.ok) return res.json()
-    if (attempt === 3) throw new Error(`Consum ${res.status} en ${path}`)
-    await sleep(2000 * attempt)
-  }
+  return retry('Consum', async () => (await fetchOk(API + path)).json())
 }
 
 function sleep(ms) {

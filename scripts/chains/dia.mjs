@@ -1,5 +1,6 @@
+import { fetchOk, retry } from './http.mjs'
+
 const SITE = 'https://www.dia.es'
-const HEADERS = { 'User-Agent': 'SuperPrecios (uso personal)' }
 
 // Any category page carries the whole menu tree in its embedded state.
 const MENU_PAGE = '/huevos-leche-y-mantequilla/c/L108'
@@ -16,13 +17,12 @@ const UNITS = {
 }
 
 async function request(path, type) {
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(SITE + path, { headers: HEADERS })
+  return retry('Dia', async () => {
+    const res = await fetchOk(SITE + path)
     const contentType = res.headers.get('content-type') ?? ''
-    if (res.ok && contentType.includes(type)) return res
-    if (attempt === 3) throw new Error(`Dia ${res.status} (${contentType}) en ${path}`)
-    await sleep(2000 * attempt)
-  }
+    if (!contentType.includes(type)) throw new Error(`${contentType} en ${path}`)
+    return res
+  })
 }
 
 function sleep(ms) {

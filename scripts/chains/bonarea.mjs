@@ -1,8 +1,6 @@
+import { fetchOk, retry } from './http.mjs'
+
 const SITE = 'https://www.bonarea-online.com'
-const HEADERS = {
-  'User-Agent': 'SuperPrecios (uso personal)',
-  'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-}
 
 // Food, drinks, cleaning and personal care; the shop also sells tools, clothes…
 const FAMILIES = ['13*300', '13*310', '13*320', '13*330', '13*340']
@@ -31,16 +29,15 @@ function decode(text) {
 
 // The shop's own category pages load their articles with this read-only call.
 async function shoppingBody(reference) {
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(`${SITE}/es/shop/ShoppingBody`, {
+  return retry('bonÀrea', async () => {
+    const res = await fetchOk(`${SITE}/es/shop/ShoppingBody`, {
       method: 'POST',
-      headers: HEADERS,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
       body: new URLSearchParams({ reference }),
     })
-    if (res.ok && res.headers.get('content-type')?.includes('application/json')) return res.json()
-    if (attempt === 3) throw new Error(`bonÀrea ${res.status} en ${reference}`)
-    await sleep(2000 * attempt)
-  }
+    if (!res.headers.get('content-type')?.includes('application/json')) throw new Error(`respuesta no JSON en ${reference}`)
+    return res.json()
+  })
 }
 
 function sleep(ms) {

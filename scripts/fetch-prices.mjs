@@ -40,8 +40,8 @@ const settled = await Promise.allSettled(
   }),
 )
 
-const failures = settled.filter((s) => s.status === 'rejected')
-for (const { reason } of failures) console.error(`::warning::Se omite una cadena: ${reason.message}`)
+const failures = settled.flatMap((s, i) => (s.status === 'rejected' ? [{ chain: selected[i], reason: s.reason }] : []))
+for (const { chain, reason } of failures) console.error(`::warning::Se omite ${chain.name}: ${reason.message}`)
 if (failures.length === selected.length) throw new Error('No se pudo descargar ninguna cadena')
 
 // The index lists every chain with data on disk, fetched now or earlier.

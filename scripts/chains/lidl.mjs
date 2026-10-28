@@ -1,18 +1,13 @@
+import { fetchOk, retry } from './http.mjs'
 import { parseQuantity } from './quantity.mjs'
 
 const SITE = 'https://www.lidl.es'
-const HEADERS = { 'User-Agent': 'SuperPrecios (uso personal)' }
 
 // Lidl sells no groceries online; only its weekly food offers carry prices.
 const OFFER_PAGES = ['/c/ofertas-semanales/a10089449', '/c/ofertas-proxima-semana/a10088432']
 
 async function request(path) {
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(SITE + path, { headers: HEADERS })
-    if (res.ok) return res.text()
-    if (attempt === 3) throw new Error(`Lidl ${res.status} en ${path}`)
-    await new Promise((resolve) => setTimeout(resolve, 2000 * attempt))
-  }
+  return retry('Lidl', async () => (await fetchOk(SITE + path)).text())
 }
 
 function decode(text) {

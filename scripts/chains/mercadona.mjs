@@ -1,3 +1,5 @@
+import { fetchOk, retry } from './http.mjs'
+
 const API = 'https://tienda.mercadona.es/api'
 
 // Prices and range depend on the warehouse that serves a postcode.
@@ -23,12 +25,7 @@ function unitPrice(pi) {
 
 async function get(path) {
   const url = `${API}${path}${path.includes('?') ? '&' : '?'}lang=es&wh=${WAREHOUSE}`
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(url, { headers: { 'User-Agent': 'SuperPrecios (uso personal)' } })
-    if (res.ok) return res.json()
-    if (attempt === 3) throw new Error(`Mercadona ${res.status} en ${url}`)
-    await sleep(2000 * attempt)
-  }
+  return retry('Mercadona', async () => (await fetchOk(url)).json())
 }
 
 function sleep(ms) {

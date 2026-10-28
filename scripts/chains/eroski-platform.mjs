@@ -1,9 +1,8 @@
+import { fetchOk, retry } from './http.mjs'
 import { parseQuantity } from './quantity.mjs'
 
-// Eroski and Caprabo (Eroski group) run the same shop software.
-const HEADERS = { 'User-Agent': 'SuperPrecios (uso personal)' }
-
-// The shops also sell electronics, furniture… only food is compared.
+// Eroski and Caprabo (Eroski group) run the same shop software. They also
+// sell electronics, furniture… only food is compared.
 const SECTIONS = ['alimentacion', 'frescos', 'dulces-y-desayuno', 'bebidas', 'congelados']
 
 function sleep(ms) {
@@ -38,12 +37,7 @@ function unitPriceOf(item) {
 
 export function eroskiPlatform({ id, name, site }) {
   async function request(path) {
-    for (let attempt = 1; ; attempt++) {
-      const res = await fetch(site + path, { headers: HEADERS })
-      if (res.ok) return res.text()
-      if (attempt === 3) throw new Error(`${name} ${res.status} en ${path}`)
-      await sleep(2000 * attempt)
-    }
+    return retry(name, async () => (await fetchOk(site + path)).text())
   }
 
   async function fetchMenu() {
