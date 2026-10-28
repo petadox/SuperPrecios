@@ -125,24 +125,12 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 
 <style scoped>
 .gate {
-  --cream: #fbf4e8;
-  --paper: #fffaf2;
-  --ink: #3b2a20;
-  --ink-soft: #7a6553;
-  --terracotta: #c8643b;
-  --terracotta-dark: #a94f2c;
-  --olive: #6b7f3a;
-  --line: #ead9c2;
-  --gingham: rgba(200, 100, 59, 0.13);
-  --gingham-bg: #f6e8d4;
-  --danger: #b3261e;
-
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
-  color: var(--ink);
-  background: var(--cream);
+  color: var(--text);
+  background: var(--bg);
 }
 
 .art {
@@ -167,7 +155,7 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   align-items: center;
   justify-content: center;
   padding: 48px 32px;
-  background: var(--paper);
+  background: var(--surface);
 }
 
 .card {
@@ -191,14 +179,14 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .lead {
   margin: 14px 0 28px;
   font-size: 1.1rem;
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 .form {
@@ -220,9 +208,9 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   padding: 14px 92px 14px 16px;
   font: inherit;
   font-size: 1.05rem;
-  color: var(--ink);
-  background: var(--cream);
-  border: 1.5px solid var(--line);
+  color: var(--text);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   border-radius: 14px;
   transition:
     border-color 0.15s,
@@ -230,14 +218,14 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 }
 
 .input::placeholder {
-  color: var(--ink-soft);
+  color: var(--muted);
   opacity: 0.7;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--terracotta);
-  box-shadow: 0 0 0 4px rgba(200, 100, 59, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .input[aria-invalid='true'] {
@@ -253,7 +241,7 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--terracotta);
+  color: var(--accent);
   background: none;
   border: 0;
   border-radius: 10px;
@@ -262,7 +250,7 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 
 .toggle:hover,
 .toggle:focus-visible {
-  background: rgba(200, 100, 59, 0.1);
+  background: var(--accent-soft);
   outline: none;
 }
 
@@ -273,7 +261,7 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   font-size: 1.05rem;
   font-weight: 700;
   color: #fffaf2;
-  background: var(--terracotta);
+  background: var(--accent);
   border: 0;
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(200, 100, 59, 0.28);
@@ -284,7 +272,7 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--terracotta-dark);
+  background: var(--accent-strong);
 }
 
 .submit:active:not(:disabled) {
@@ -312,8 +300,8 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
   margin: 24px 0 0;
   padding-top: 18px;
   font-size: 0.9rem;
-  color: var(--ink-soft);
-  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  border-top: 1px dashed var(--border);
 }
 
 @media (max-width: 800px) {
@@ -349,20 +337,6 @@ onUnmounted(() => window.removeEventListener('hashchange', enterFromLink))
 }
 
 @media (prefers-color-scheme: dark) {
-  .gate {
-    --cream: #251d17;
-    --paper: #1d1712;
-    --ink: #f3e9dc;
-    --ink-soft: #bba996;
-    --terracotta: #e07a52;
-    --terracotta-dark: #c8643b;
-    --olive: #a9bf6a;
-    --line: #3d3027;
-    --gingham: rgba(224, 122, 82, 0.1);
-    --gingham-bg: #2a211a;
-    --danger: #ff8f80;
-  }
-
   .basket {
     filter: brightness(0.92) drop-shadow(0 18px 30px rgba(0, 0, 0, 0.35));
   }

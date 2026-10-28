@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import basket from '../assets/market-basket.svg'
 import { chains, products } from '../catalog'
 import { formatDate, normalize } from '../utils/text'
 import UnitGroup from './UnitGroup.vue'
@@ -55,11 +56,14 @@ function toggleChain(id) {
 </script>
 
 <template>
-  <header class="header">
+  <header class="header gingham">
     <div class="wrap header-row">
-      <div>
-        <h1>🛒 SuperPrecios</h1>
-        <p class="muted">Compara el precio por kilo, litro o unidad entre supermercados.</p>
+      <div class="brand">
+        <img :src="basket" alt="" class="brand-basket" width="480" height="430" />
+        <div>
+          <p class="eyebrow">Tu compra, más barata</p>
+          <h1 class="title">SuperPrecios</h1>
+        </div>
       </div>
       <button class="link-button" type="button" @click="emit('logout')">Salir</button>
     </div>
@@ -87,7 +91,7 @@ function toggleChain(id) {
     </section>
 
     <section v-if="!query.trim() && !category" class="empty">
-      <p class="muted">Prueba con:</p>
+      <p class="muted">¿Qué te falta en la despensa? Prueba con:</p>
       <div class="suggestions">
         <button v-for="s in SUGGESTIONS" :key="s" class="chip" @click="query = s">{{ s }}</button>
       </div>
@@ -96,7 +100,7 @@ function toggleChain(id) {
     <p v-else-if="matches.length === 0" class="muted">No hay productos que coincidan.</p>
 
     <template v-else>
-      <p class="muted">{{ matches.length }} productos</p>
+      <p class="muted count">{{ matches.length }} productos</p>
       <UnitGroup
         v-for="g in groups"
         :key="g.unit + query + category"

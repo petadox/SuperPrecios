@@ -23,7 +23,7 @@ export async function unlock(password) {
   const lists = await Promise.all(index.chains.map(async (c) => decryptJson(key, await bytes(`${c.id}.bin`))))
   products.value = lists.flat().map((p) => ({
     ...p,
-    search: normalize([p.name, p.format, p.subcategory, p.category].join(' ')),
+    search: normalize([p.name, p.format].join(' ')),
   }))
   chains.value = index.chains
 }
