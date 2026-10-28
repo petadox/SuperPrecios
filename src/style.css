@@ -299,12 +299,20 @@ h2 {
   --chain-color: var(--chain-lidl);
 }
 
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .result-card {
   display: flex;
   align-items: center;
   gap: 16px;
   width: 100%;
-  margin-top: 8px;
   padding: 16px;
   font: inherit;
   color: inherit;
@@ -610,6 +618,24 @@ h2 {
   .ranking li {
     padding: 4px 10px;
     font-size: 0.8rem;
+  }
+
+  .result-card {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .result-image {
+    width: 56px;
+    height: 56px;
+  }
+
+  .result-title {
+    font-size: 1.12rem;
+  }
+
+  .result-price {
+    font-size: 0.95rem;
   }
 
   .product {

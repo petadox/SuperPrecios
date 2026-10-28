@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { KDF_ITERATIONS, encryptJson, keyFromPassword, toBase64 } from '../src/crypto.js'
+import { assignTypes } from './product-types.mjs'
 
 // Publishes data/ into public/data/ encrypted with SITE_PASSWORD, so the
 // prices can only be read with the password even though Pages is public.
@@ -16,10 +17,16 @@ await rm(OUT_DIR, { recursive: true, force: true })
 await mkdir(OUT_DIR, { recursive: true })
 
 const index = JSON.parse(await readFile(new URL('index.json', DATA_DIR), 'utf8'))
+const byChain = await Promise.all(
+  index.chains.map(async (chain) => JSON.parse(await readFile(new URL(`${chain.id}.json`, DATA_DIR), 'utf8'))),
+)
+
+// Brands are learnt from every chain at once, so types are assigned together.
+assignTypes(byChain.flat())
+
 await writeFile(new URL('crypto.json', OUT_DIR), JSON.stringify({ salt: toBase64(salt), iterations: KDF_ITERATIONS }))
 await writeFile(new URL('index.bin', OUT_DIR), await encryptJson(key, index))
-for (const chain of index.chains) {
-  const products = JSON.parse(await readFile(new URL(`${chain.id}.json`, DATA_DIR), 'utf8'))
-  await writeFile(new URL(`${chain.id}.bin`, OUT_DIR), await encryptJson(key, products))
+for (const [i, chain] of index.chains.entries()) {
+  await writeFile(new URL(`${chain.id}.bin`, OUT_DIR), await encryptJson(key, byChain[i]))
 }
 console.log(`Cifradas ${index.chains.length} cadenas en public/data/`)

@@ -59,6 +59,7 @@ function toProduct(item, category, subcategory) {
   return {
     id: `dia:${item.object_id}`,
     chain: 'dia',
+    brand: item.brand ?? '',
     name: item.display_name,
     format: '',
     price,

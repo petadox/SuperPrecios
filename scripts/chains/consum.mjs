@@ -52,6 +52,7 @@ function toProduct(p, section) {
   return {
     id: `consum:${p.code}`,
     chain: 'consum',
+    brand: p.productData.brand?.name ?? '',
     name: [p.productData.description || p.productData.name, p.productData.brand && titleCase(p.productData.brand.name)]
       .filter(Boolean)
       .join(' '),

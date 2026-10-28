@@ -75,6 +75,7 @@ export function eroskiPlatform({ id, name, site }) {
     return {
       id: `${id}:${item.item_id}`,
       chain: id,
+      brand: item.item_brand ?? '',
       name: comma > 0 ? full.slice(0, comma) : full,
       format: comma > 0 ? full.slice(comma + 2).trim() : '',
       price: item.price,

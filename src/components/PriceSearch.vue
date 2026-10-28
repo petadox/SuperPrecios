@@ -2,41 +2,45 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import basket from '../assets/market-basket.svg'
 import { chains, products } from '../catalog'
-import { formatDate, formatPrice, normalize } from '../utils/text'
+import { groupByType, groupByUnit, matchProducts } from '../search'
+import { formatDate, formatPrice } from '../utils/text'
 import ProductView from './ProductView.vue'
 
-const SUGGESTIONS = ['leche entera', 'aceite oliva virgen extra', 'huevos', 'arroz', 'atún', 'café molido', 'papel higiénico', 'detergente']
+const SUGGESTIONS = ['leche', 'aceite oliva virgen extra', 'huevos', 'arroz', 'atún', 'café molido', 'papel higiénico', 'detergente']
+const PAGE = 10
 
 const emit = defineEmits(['logout'])
 
 const params = new URLSearchParams(location.search)
 const query = ref(params.get('q') ?? '')
 const category = ref(params.get('cat') ?? '')
-const open = ref(params.get('ver') === '1')
+const openType = ref(params.get('tipo') ?? '')
 const hiddenChains = ref(new Set())
+const shown = ref(PAGE)
 
-function url(withProduct) {
+function url(type) {
   const next = new URLSearchParams()
   if (query.value.trim()) next.set('q', query.value.trim())
   if (category.value) next.set('cat', category.value)
-  if (withProduct) next.set('ver', '1')
+  if (type) next.set('tipo', type)
   const search = next.toString()
   return search ? `?${search}` : location.pathname
 }
 
 watch([query, category], () => {
-  open.value = false
-  history.replaceState(null, '', url(false))
+  openType.value = ''
+  shown.value = PAGE
+  history.replaceState(null, '', url(''))
 })
 
 // The product view gets its own history entry, so the phone's back gesture
 // returns to the search instead of leaving the site.
 let pushed = false
 
-function openProduct() {
-  open.value = true
+function openProduct(type) {
+  openType.value = type
   pushed = true
-  history.pushState(null, '', url(true))
+  history.pushState(null, '', url(type))
   window.scrollTo({ top: 0 })
 }
 
@@ -46,13 +50,13 @@ function closeProduct() {
     history.back()
     return
   }
-  open.value = false
-  history.replaceState(null, '', url(false))
+  openType.value = ''
+  history.replaceState(null, '', url(''))
 }
 
 function syncFromHistory() {
-  open.value = new URLSearchParams(location.search).get('ver') === '1'
-  if (!open.value) pushed = false
+  openType.value = new URLSearchParams(location.search).get('tipo') ?? ''
+  if (!openType.value) pushed = false
 }
 
 onMounted(() => window.addEventListener('popstate', syncFromHistory))
@@ -62,49 +66,31 @@ const categories = computed(() =>
   [...new Set(products.value.map((p) => p.category))].sort((a, b) => a.localeCompare(b, 'es')),
 )
 
-const matches = computed(() => {
-  const words = normalize(query.value).split(/\s+/).filter(Boolean)
-  if (words.length === 0 && !category.value) return []
-  return products.value.filter(
-    (p) =>
-      !hiddenChains.value.has(p.chain) &&
-      (!category.value || p.category === category.value) &&
-      words.every((w) => p.search.includes(w)),
-  )
-})
-
-const groups = computed(() => {
-  const byUnit = new Map()
-  for (const p of matches.value) {
-    if (!byUnit.has(p.unit)) byUnit.set(p.unit, [])
-    byUnit.get(p.unit).push(p)
-  }
-  return [...byUnit]
-    .map(([unit, items]) => ({ unit, items: items.sort((a, b) => a.unitPrice - b.unitPrice) }))
-    .sort((a, b) => b.items.length - a.items.length)
-})
-
-const title = computed(() => {
-  const text = query.value.trim() || category.value
-  return text.charAt(0).toUpperCase() + text.slice(1)
-})
+const matches = computed(() =>
+  matchProducts(products.value, { query: query.value, category: category.value, hiddenChains: hiddenChains.value }),
+)
 
 const chainName = computed(() => Object.fromEntries(chains.value.map((c) => [c.id, c.name])))
 
-// What the single result card shows: the cheapest option in the unit most
-// products are sold by.
-const summary = computed(() => {
-  const main = groups.value[0]
-  if (!main) return null
-  const best = main.items[0]
-  const tied = new Set(main.items.filter((p) => p.unitPrice === best.unitPrice).map((p) => chainName.value[p.chain]))
-  return {
-    best,
-    unit: main.unit,
-    winners: [...tied].join(', '),
-    chainCount: new Set(matches.value.map((p) => p.chain)).size,
-  }
-})
+// "Mercadona, Dia y 3 más" keeps a tie readable on a phone.
+function listNames(names) {
+  if (names.length <= 2) return names.join(' y ')
+  return `${names.slice(0, 2).join(', ')} y ${names.length - 2} más`
+}
+
+// One card per kind of product ("Leche entera", "Leche desnatada sin lactosa"…),
+// showing the cheapest option in the unit most of its products are sold by.
+const types = computed(() =>
+  groupByType(matches.value, query.value).map((t) => {
+    const units = groupByUnit(t.items)
+    const main = units[0]
+    const best = main.items[0]
+    const winners = [...new Set(main.items.filter((p) => p.unitPrice === best.unitPrice).map((p) => chainName.value[p.chain]))]
+    return { ...t, units, best, unit: main.unit, winners: listNames(winners) }
+  }),
+)
+
+const selected = computed(() => types.value.find((t) => t.type === openType.value))
 
 function toggleChain(id) {
   const next = new Set(hiddenChains.value)
@@ -155,38 +141,52 @@ function toggleChain(id) {
       </div>
     </section>
 
-    <p v-else-if="!summary" class="muted">No hay productos que coincidan.</p>
+    <p v-else-if="types.length === 0" class="muted">No hay productos que coincidan.</p>
 
     <ProductView
-      v-else-if="open"
-      :title="title"
-      :groups="groups"
+      v-else-if="selected"
+      :title="selected.name"
+      :groups="selected.units"
       :chains="chains"
-      :total="matches.length"
+      :total="selected.items.length"
       @back="closeProduct"
     />
 
-    <button v-else class="result-card" type="button" @click="openProduct">
-      <img
-        :src="summary.best.image"
-        alt=""
-        class="result-image"
-        width="72"
-        height="72"
-        @error="$event.target.style.visibility = 'hidden'"
-      />
-      <span class="result-body">
-        <span class="result-title">{{ title }}</span>
-        <span class="result-price">
-          Desde <strong>{{ formatPrice(summary.best.unitPrice) }}/{{ summary.unit }}</strong> en {{ summary.winners }}
-        </span>
-        <span class="muted result-meta">
-          {{ matches.length }} productos en {{ summary.chainCount }}
-          {{ summary.chainCount === 1 ? 'supermercado' : 'supermercados' }}
-        </span>
-      </span>
-      <span class="result-chevron" aria-hidden="true">›</span>
-    </button>
+    <template v-else>
+      <p class="muted count">
+        {{ types.length }} {{ types.length === 1 ? 'tipo de producto' : 'tipos de producto' }} ·
+        {{ matches.length }} productos
+      </p>
+      <ul class="result-list">
+        <li v-for="t in types.slice(0, shown)" :key="t.type">
+          <button class="result-card" type="button" @click="openProduct(t.type)">
+            <img
+              :src="t.best.image"
+              alt=""
+              class="result-image"
+              width="72"
+              height="72"
+              loading="lazy"
+              @error="$event.target.style.visibility = 'hidden'"
+            />
+            <span class="result-body">
+              <span class="result-title">{{ t.name }}</span>
+              <span class="result-price">
+                Desde <strong>{{ formatPrice(t.best.unitPrice) }}/{{ t.unit }}</strong> en {{ t.winners }}
+              </span>
+              <span class="muted result-meta">
+                {{ t.items.length }} {{ t.items.length === 1 ? 'producto' : 'productos' }} en {{ t.chains.size }}
+                {{ t.chains.size === 1 ? 'supermercado' : 'supermercados' }}
+              </span>
+            </span>
+            <span class="result-chevron" aria-hidden="true">›</span>
+          </button>
+        </li>
+      </ul>
+      <button v-if="types.length > shown" class="more" type="button" @click="shown += PAGE">
+        Mostrar más tipos ({{ types.length - shown }})
+      </button>
+    </template>
   </main>
 
   <footer class="wrap footer muted">
